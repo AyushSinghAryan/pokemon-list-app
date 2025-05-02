@@ -4,40 +4,24 @@ import Header from './components/Header';
 import SearchBar from './components/SearchBox';
 import TypeFilter from './components/TypeFilter';
 import PokemonCard from './components/PokemonCard';
+import Pagination from './components/Pagination';
 function App() {
-  const { data, error, loading } = useFetchData("https://pokeapi.co/api/v2/pokemon?limit=150");
-  const [pokemonList, setpokemonList] = useState([]);
-  const [loadingDetails, setLoadingDetails] = useState(true);
-  const [selectedType, setSelectedType] = useState('all');
+  const { data, loading, error } = useFetchData('https://pokeapi.co/api/v2/pokemon?limit=150');
+  const [pokemonList, setPokemonList] = useState([]);
   const [filteredList, setFilteredList] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedType, setSelectedType] = useState('all');
+  const [loadingDetails, setLoadingDetails] = useState(true);
 
-  // useEffect(() => {
-  //   async function fetchPokemonDetails() {
-  //     if (data?.results) {
-  //       const detailsPromises = data.results.map(async (pokemon) => {
-  //         const res = await fetch(pokemon.url);
-  //         const detail = await res.json();
-
-  //         const allPokemonDetails = await Promise.all(detail);
-  //         setpokemonList(allPokemonDetails);
-  //         setLoadingDetails(false);
-  //       });
-
-
-  //     }
-  //   }
-
-  //   fetchPokemonDetails();
-  // }, [data]);
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 20;
 
   useEffect(() => {
     async function fetchDetails() {
       if (!data?.results) return;
       const promises = data.results.map(poke => fetch(poke.url).then(res => res.json()));
       const details = await Promise.all(promises);
-      setpokemonList(details);
+      setPokemonList(details);
       setLoadingDetails(false);
     }
     fetchDetails();
@@ -51,9 +35,14 @@ function App() {
     if (selectedType !== 'all') {
       list = list.filter(p => p.types.some(t => t.type.name === selectedType));
     }
-    console.log("list", list)
     setFilteredList(list);
+    setCurrentPage(1); // Reset to page 1 when filters change
   }, [pokemonList, searchTerm, selectedType]);
+
+  const lastIndex = currentPage * postsPerPage;
+  const firstIndex = lastIndex - postsPerPage;
+  const currentPageData = filteredList.slice(firstIndex, lastIndex);
+  const totalPages = Math.ceil(filteredList.length / postsPerPage);
 
   if (loading || loadingDetails) {
     return (
@@ -71,24 +60,34 @@ function App() {
     );
   }
 
+
+
+
   return (
-    <>
-      <div className="min-h-screen bg-gray-100 p-4">
-        <Header title="Pokémon Explorer" />
-        <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
-          <SearchBar value={searchTerm} onChange={setSearchTerm} />
-          <TypeFilter value={selectedType} onChange={setSelectedType} />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredList.length > 0 ? (
-            filteredList.map(pokemon => <PokemonCard key={pokemon.id} pokemon={pokemon} />)
-          ) : (
-            <div className="col-span-full text-center text-gray-600">No Pokémon found.</div>
-          )}
-        </div>
+    <div className="min-h-screen bg-gray-100 p-4">
+      <Header title="Pokédex Explorer" />
+      <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+        <SearchBar value={searchTerm} onChange={setSearchTerm} />
+        <TypeFilter value={selectedType} onChange={setSelectedType} />
       </div>
-    </>
-  )
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {currentPageData.length > 0 ? (
+          currentPageData.map(pokemon => <PokemonCard key={pokemon.id} pokemon={pokemon} />)
+
+        ) : (
+          <div className="col-span-full text-center text-gray-600">No Pokémon found.</div>
+        )}
+      </div>
+
+
+      <Pagination
+        totalPages={totalPages}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+      />
+    </div>
+  );
 }
 
 export default App;

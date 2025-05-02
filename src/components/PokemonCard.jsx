@@ -1,8 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export default function PokemonCard({ pokemon }) {
     return (
-        <div className="bg-white rounded-2xl shadow-md p-4 flex flex-col items-center hover:scale-105 transform transition">
+        <Link to={`/pokemon/${pokemon.name}`} className="bg-white rounded-2xl shadow-md p-4 flex flex-col items-center hover:scale-105 transform transition">
             <img
                 src={pokemon.sprites.front_default}
                 alt={pokemon.name}
@@ -20,6 +21,7 @@ export default function PokemonCard({ pokemon }) {
                     </span>
                 ))}
             </div>
-        </div>
+
+        </Link>
     )
 }
